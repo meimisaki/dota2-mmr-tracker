@@ -10,7 +10,7 @@ async function refreshMMR(entry) {
     if (match.match_id <= entry.match_id)
       continue;
     const is_radiant = match.player_slot < 128;
-    const is_leaver = match.leaver_status > 1;
+    const is_leaver = match.leaver_status > 0;
     const is_winner = !is_leaver && is_radiant == match.radiant_win;
     const is_solo = match.party_size <= 1;
     match_id = Math.max(match_id, match.match_id);
