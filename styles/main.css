@@ -1,0 +1,23 @@
+.title {
+	color: black;
+	text-decoration: none;
+}
+
+.title:hover {
+	text-decoration: underline;
+}
+
+.summary {
+	display: flex;
+	padding: 0 20px;
+}
+
+.summary dt {
+	display: inline;
+	flex: 1;
+}
+
+.summary dd {
+	display: inline;
+	flex: 0;
+}
