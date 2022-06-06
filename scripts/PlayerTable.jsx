@@ -20,14 +20,14 @@ function PlayerEntry(props) {
     </th>
     <td>
       {reader(matches => {
-        const { match_id } = matches.at(-1);
+        const { match_id } = matches[matches.length - 1];
         return <a href={`https://www.opendota.com/matches/${match_id}`}>
           {match_id}
         </a>
       })}
     </td>
     <td>
-      {reader(matches => matches.at(-1).mmr)}
+      {reader(matches => matches[matches.length - 1].mmr)}
     </td>
     <td>
       <Link to={`/players/${entry.player_id}`}>Detail</Link>
