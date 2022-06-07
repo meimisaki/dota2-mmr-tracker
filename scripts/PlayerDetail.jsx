@@ -4,22 +4,17 @@
   (global = global || self, factory(global.PlayerDetail = {}));
 }(this, (function (exports) { 'use strict';
 
-const { useMemo } = React;
+const { useMemo, useState } = React;
 const { useParams } = ReactRouterDOM;
 const { useAsyncData } = hooks;
 const { fetchMatchHistory } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
 
-function findPlayerEntry(player_id) {
-  for (const entry of tracking_players)
-    if (entry.player_id == player_id)
-      return entry;
-  return null;
-}
-
 const heroMap = {};
 for (const hero of dota2_webapi_heroes)
   heroMap[hero.id] = hero.localized_name;
+
+const plotStyle = { width: '100%', minWidth: 640 };
 
 function getMatchText(match) {
   const start = new Date(match.start_time * 1000);
@@ -48,15 +43,11 @@ function getMatchColor(match) {
   }
 }
 
-const plotStyle = { width: '100%' };
-
-function PlayerDetail(props) {
-  const { player_id } = useParams();
-  const entry = findPlayerEntry(player_id);
-  const [matches, error] = useAsyncData(() => fetchMatchHistory(entry));
+function MMRHistoryCurve(props) {
+  const { matches } = props;
   const { data, layout } = useMemo(() => {
     const x = [], y = [], text = [], color = [], size = [];
-    if (matches && !error)
+    if (matches)
       for (let i = 0; i < matches.length; ++i) {
         const match = matches[i];
         x.push(i + 1);
@@ -69,17 +60,90 @@ function PlayerDetail(props) {
       x,
       y,
       text,
-      type: 'scatter',
+      type: 'scattergl',
       mode: 'lines+markers',
       marker: { color, size },
     };
     const layout = {
-      title: 'MMR History',
+      title: 'Ranked MMR History',
       xaxis: { title: 'Match' },
       yaxis: { title: 'MMR' },
     };
     return { data: [trace], layout };
-  }, [matches, error]);
+  }, [matches]);
+  return <Plot style={plotStyle} data={data} layout={layout} />;
+}
+
+function roundToHour(time) {
+  return Math.floor(time / 3600) * 3600;
+}
+
+function getTimeBin(time) {
+  const hours = new Date(time * 1000).getHours();
+  const suffix = hours < 12 ? 'AM' : 'PM';
+  return `${hours % 12 || 12}${suffix}`;
+}
+
+function PlayTimeHistogram(props) {
+  const { matches } = props;
+  const [time, setTime] = useState(() => roundToHour(Date.now() / 1000));
+  const { data, layout } = useMemo(() => {
+    const x = [], y = [], category = [];
+    const xbegin = time - 3600 * 23;
+    const xend = time + 3600 * 1;
+    for (let now = xbegin; now < xend; now += 3600)
+      category.push(getTimeBin(now));
+    if (matches)
+      for (let i = 0; i < matches.length; ++i) {
+        const match = matches[i];
+        const start = match.start_time;
+        const end = start + match.duration;
+        for (let now = start; now < end;) {
+          const next = roundToHour(now) + 3600;
+          const elapsed = Math.min(next, end) - now;
+          if (xbegin <= now && now < xend) {
+            x.push(getTimeBin(now));
+            y.push(elapsed / 60);
+          }
+          now += elapsed;
+        }
+      }
+    const trace = {
+      x,
+      y,
+      type: 'histogram',
+      histfunc: 'sum',
+    };
+    const layout = {
+      title: 'Play Time in the Past 24H',
+      xaxis: {
+        title: 'Interval in Hours',
+        fixedrange: true,
+        range: [-1, 24],
+        categoryarray: category,
+      },
+      yaxis: {
+        title: 'Duration in Minutes',
+        fixedrange: true,
+        range: [0, 61],
+      },
+    };
+    return { data: [trace], layout };
+  }, [matches, time]);
+  return <Plot style={plotStyle} data={data} layout={layout} />;
+}
+
+function findPlayerEntry(player_id) {
+  for (const entry of tracking_players)
+    if (entry.player_id == player_id)
+      return entry;
+  return null;
+}
+
+function PlayerDetail(props) {
+  const { player_id } = useParams();
+  const entry = findPlayerEntry(player_id);
+  const [matches, error] = useAsyncData(() => fetchMatchHistory(entry));
   return <div>
     <dl className="summary">
       <dt>Player ID</dt>
@@ -89,7 +153,8 @@ function PlayerDetail(props) {
         </a>
       </dd>
     </dl>
-    <Plot style={plotStyle} data={data} layout={layout} />
+    <MMRHistoryCurve matches={matches} />
+    <PlayTimeHistogram matches={matches} />
   </div>;
 }
 
