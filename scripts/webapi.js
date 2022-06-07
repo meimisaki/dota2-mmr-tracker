@@ -4,6 +4,19 @@
   (global = global || self, factory(global.webapi = {}));
 }(this, (function (exports) { 'use strict';
 
+const Heroes = {};
+for (const hero of dota2_webapi_heroes) {
+  Heroes[hero.id] = hero;
+  Heroes[hero.name] = hero;
+}
+
+const LobbyTypes = {};
+for (const id in dota2_webapi_lobby_types) {
+  const lobby_type = dota2_webapi_lobby_types[id];
+  LobbyTypes[lobby_type.id] = lobby_type;
+  LobbyTypes[lobby_type.name] = lobby_type;
+}
+
 function isRecalibration(player, match) {
   for (const { start, end } of player.recalibration)
     if (start <= match.match_id && match.match_id <= end)
@@ -12,6 +25,8 @@ function isRecalibration(player, match) {
 }
 
 function getMatchScore(player, match) {
+  if (match.lobby_type != LobbyTypes.lobby_type_ranked.id)
+    return 0;
   const is_radiant = match.player_slot < 128;
   const is_leaver = match.leaver_status > 0;
   const is_winner = !is_leaver && is_radiant == match.radiant_win;
@@ -21,8 +36,7 @@ function getMatchScore(player, match) {
 }
 
 async function fetchMatchHistory(entry) {
-  const params = new URLSearchParams({ lobby_type: 7 });
-  const url = `https://api.opendota.com/api/players/${entry.player_id}/matches?${params.toString()}`;
+  const url = `https://api.opendota.com/api/players/${entry.player_id}/matches`;
   const response = await fetch(url);
   const matches = await response.json();
   matches.sort((a, b) => {
@@ -51,6 +65,8 @@ async function fetchMatchHistory(entry) {
   return matches;
 }
 
+exports.Heroes = Heroes;
+exports.LobbyTypes = LobbyTypes;
 exports.fetchMatchHistory = fetchMatchHistory;
 
 })));

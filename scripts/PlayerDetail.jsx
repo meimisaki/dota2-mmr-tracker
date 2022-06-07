@@ -7,20 +7,16 @@
 const { useMemo, useState } = React;
 const { useParams } = ReactRouterDOM;
 const { useAsyncData } = hooks;
-const { fetchMatchHistory } = webapi;
+const { Heroes, fetchMatchHistory } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
-
-const heroMap = {};
-for (const hero of dota2_webapi_heroes)
-  heroMap[hero.id] = hero.localized_name;
-
 const plotStyle = { width: '100%', minWidth: 640 };
 
 function getMatchText(match) {
   const start = new Date(match.start_time * 1000);
   const duration = new Date(match.duration * 1000);
+  const hero = Heroes[match.hero_id] || {};
   return [
-    `Hero: ${heroMap[match.hero_id]}`,
+    `Hero: ${hero.localized_name}`,
     `KDA: ${match.kills}/${match.deaths}/${match.assists}`,
     `Party: ${match.party_size}`,
     `Date: ${start.toLocaleDateString()}`,
@@ -47,15 +43,14 @@ function MMRHistoryCurve(props) {
   const { matches } = props;
   const { data, layout } = useMemo(() => {
     const x = [], y = [], text = [], color = [], size = [];
-    if (matches)
-      for (let i = 0; i < matches.length; ++i) {
-        const match = matches[i];
-        x.push(i + 1);
-        y.push(match.mmr);
-        text.push(getMatchText(match));
-        color.push(getMatchColor(match));
-        size.push(match.leaver_status > 0 ? 8 : 4);
-      }
+    let index = 0;
+    for (const match of matches || []) {
+      x.push(++index);
+      y.push(match.mmr);
+      text.push(getMatchText(match));
+      color.push(getMatchColor(match));
+      size.push(match.leaver_status > 0 ? 8 : 4);
+    }
     const trace = {
       x,
       y,
@@ -93,21 +88,19 @@ function PlayTimeHistogram(props) {
     const xend = time + 3600 * 1;
     for (let now = xbegin; now < xend; now += 3600)
       category.push(getTimeBin(now));
-    if (matches)
-      for (let i = 0; i < matches.length; ++i) {
-        const match = matches[i];
-        const start = match.start_time;
-        const end = start + match.duration;
-        for (let now = start; now < end;) {
-          const next = roundToHour(now) + 3600;
-          const elapsed = Math.min(next, end) - now;
-          if (xbegin <= now && now < xend) {
-            x.push(getTimeBin(now));
-            y.push(elapsed / 60);
-          }
-          now += elapsed;
+    for (const match of matches || []) {
+      const start = match.start_time;
+      const end = start + match.duration;
+      for (let now = start; now < end;) {
+        const next = roundToHour(now) + 3600;
+        const elapsed = Math.min(next, end) - now;
+        if (xbegin <= now && now < xend) {
+          x.push(getTimeBin(now));
+          y.push(elapsed / 60);
         }
+        now += elapsed;
       }
+    }
     const trace = {
       x,
       y,
