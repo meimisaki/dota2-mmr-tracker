@@ -25,7 +25,7 @@ function getMatchText(match) {
     `Party: ${match.party_size}`,
     `Date: ${start.toLocaleDateString()}`,
     `Time: ${start.toLocaleTimeString()}`,
-    `Duration: ${duration.toISOString().substr(11, 8)}`,
+    `Duration: ${duration.toISOString().slice(11, 19)}`,
   ].join('<br>');
 }
 
