@@ -10,6 +10,13 @@ for (const hero of dota2_webapi_heroes) {
   Heroes[hero.name] = hero;
 }
 
+const GameModes = {};
+for (const id in dota2_webapi_game_modes) {
+  const game_mode = dota2_webapi_game_modes[id];
+  GameModes[game_mode.id] = game_mode;
+  GameModes[game_mode.name] = game_mode;
+}
+
 const LobbyTypes = {};
 for (const id in dota2_webapi_lobby_types) {
   const lobby_type = dota2_webapi_lobby_types[id];
@@ -66,6 +73,7 @@ async function fetchMatchHistory(entry) {
 }
 
 exports.Heroes = Heroes;
+exports.GameModes = GameModes;
 exports.LobbyTypes = LobbyTypes;
 exports.fetchMatchHistory = fetchMatchHistory;
 

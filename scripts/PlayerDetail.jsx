@@ -7,7 +7,7 @@
 const { useMemo, useState } = React;
 const { useParams } = ReactRouterDOM;
 const { useAsyncData } = hooks;
-const { Heroes, fetchMatchHistory } = webapi;
+const { Heroes, GameModes, LobbyTypes, fetchMatchHistory } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
 const plotStyle = { width: '100%', minWidth: 640 };
 
@@ -15,10 +15,17 @@ function getMatchText(match) {
   const start = new Date(match.start_time * 1000);
   const duration = new Date(match.duration * 1000);
   const hero = Heroes[match.hero_id] || {};
+  const mode = GameModes[match.game_mode] || {};
+  const lobby = LobbyTypes[match.lobby_type] || {};
+  const side = match.player_slot < 128 ? 'Radiant' : 'Dire';
   return [
+    `ID: ${match.match_id}`,
     `Hero: ${hero.localized_name}`,
     `KDA: ${match.kills}/${match.deaths}/${match.assists}`,
+    `Mode: ${mode.name}`,
+    `Lobby: ${lobby.name}`,
     `Party: ${match.party_size}`,
+    `Side: ${side}`,
     `Date: ${start.toLocaleDateString()}`,
     `Time: ${start.toLocaleTimeString()}`,
     `Duration: ${duration.toISOString().slice(11, 19)}`,
