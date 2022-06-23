@@ -1,5 +1,16 @@
+@media (prefers-color-scheme: light) {
+	.title {
+		color: black;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	.title {
+		color: white;
+	}
+}
+
 .title {
-	color: black;
 	text-decoration: none;
 }
 

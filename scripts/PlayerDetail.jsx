@@ -6,7 +6,7 @@
 
 const { useMemo, useState } = React;
 const { useParams } = ReactRouterDOM;
-const { useAsyncData } = hooks;
+const { useAsyncData, useMediaQuery } = hooks;
 const { Heroes, GameModes, LobbyTypes, fetchMatchHistory } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
 const plotStyle = { width: '100%', minWidth: 640 };
@@ -48,6 +48,7 @@ function getMatchColor(match) {
 
 function MMRHistoryCurve(props) {
   const { matches } = props;
+  const darkmode = useMediaQuery('(prefers-color-scheme: dark)');
   const { data, layout } = useMemo(() => {
     const x = [], y = [], text = [], color = [], size = [];
     let index = 0;
@@ -67,12 +68,13 @@ function MMRHistoryCurve(props) {
       marker: { color, size },
     };
     const layout = {
+      template: darkmode ? plotly_dark_theme : null,
       title: 'Ranked MMR History',
       xaxis: { title: 'Match' },
       yaxis: { title: 'MMR' },
     };
     return { data: [trace], layout };
-  }, [matches]);
+  }, [matches, darkmode]);
   return <Plot style={plotStyle} data={data} layout={layout} />;
 }
 
@@ -88,6 +90,7 @@ function getTimeBin(time) {
 
 function PlayTimeHistogram(props) {
   const { matches } = props;
+  const darkmode = useMediaQuery('(prefers-color-scheme: dark)');
   const [time, setTime] = useState(() => roundToHour(Date.now() / 1000));
   const { data, layout } = useMemo(() => {
     const x = [], y = [], category = [];
@@ -115,6 +118,7 @@ function PlayTimeHistogram(props) {
       histfunc: 'sum',
     };
     const layout = {
+      template: darkmode ? plotly_dark_theme : null,
       title: 'Play Time in the Past 24H',
       xaxis: {
         title: 'Interval in Hours',
@@ -129,7 +133,7 @@ function PlayTimeHistogram(props) {
       },
     };
     return { data: [trace], layout };
-  }, [matches, time]);
+  }, [matches, darkmode, time]);
   return <Plot style={plotStyle} data={data} layout={layout} />;
 }
 
