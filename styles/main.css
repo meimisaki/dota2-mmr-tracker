@@ -1,3 +1,29 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	min-width: 640px;
+	min-height: 100vh;
+}
+
+.content {
+	flex-grow: 1;
+}
+
+.footer {
+	border-top: 1px solid gray;
+	margin-top: 20px;
+	padding: 8px;
+	display: flex;
+}
+
+.footer .copyright {
+	flex-grow: 1;
+}
+
+.footer .repository {
+	flex-grow: 0;
+}
+
 @media (prefers-color-scheme: light) {
 	.title {
 		color: black;

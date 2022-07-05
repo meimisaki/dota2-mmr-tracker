@@ -9,7 +9,7 @@ const { useParams } = ReactRouterDOM;
 const { useAsyncData, useMediaQuery } = hooks;
 const { Heroes, GameModes, LobbyTypes, fetchMatchHistory } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
-const plotStyle = { width: '100%', minWidth: 640 };
+const plotStyle = { width: '100%' };
 
 function getMatchText(match) {
   const start = new Date(match.start_time * 1000);
