@@ -3,8 +3,8 @@ const tracking_players = [
 	{
 		"player_id": 431892272,
 		"anchor": {
-			"match_id": 6515528703,
-			"mmr": 760,
+			"match_id": 6599459647,
+			"mmr": 780,
 		},
 		"recalibration": [
 			{
