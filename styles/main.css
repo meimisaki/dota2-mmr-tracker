@@ -46,15 +46,38 @@
 
 .summary {
 	display: flex;
+	flex-wrap: wrap;
 	padding: 0 20px;
 }
 
 .summary dt {
-	display: inline;
-	flex: 1;
+	flex: 0 0 50%;
+	max-width: 50%;
 }
 
 .summary dd {
-	display: inline;
-	flex: 0;
+	flex: 0 0 50%;
+	max-width: 50%;
+	text-align: right;
+}
+
+.summary img {
+	width: 64px;
+}
+
+.summary .rank {
+	display: flex;
+	justify-content: right;
+	position: relative;
+}
+
+.summary .star {
+	position: absolute;
+}
+
+.summary .leaderboard {
+	position: absolute;
+	margin-top: 40px;
+	width: 64px;
+	text-align: center;
 }

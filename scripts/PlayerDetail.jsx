@@ -7,7 +7,7 @@
 const { useMemo, useState } = React;
 const { useParams } = ReactRouterDOM;
 const { useAsyncData, useMediaQuery } = hooks;
-const { Heroes, GameModes, LobbyTypes, fetchMatchHistory } = webapi;
+const { Heroes, GameModes, LobbyTypes, fetchMatchHistory, fetchPlayerData } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
 const plotStyle = { width: '100%' };
 
@@ -144,17 +144,69 @@ function findPlayerEntry(player_id) {
   return null;
 }
 
+function decodeRankTier(player) {
+  const leaderboard = player?.leaderboard_rank || 0;
+  const rank = player?.rank_tier || 0;
+  const medal = Math.trunc(rank / 10);
+  const star = rank % 10;
+  const variant = (() => {
+    if (0 < leaderboard && leaderboard <= 10)
+      return 'c';
+    if (10 < leaderboard && leaderboard <= 100)
+      return 'b';
+    return '';
+  })();
+  const baseUrl = 'https://www.opendota.com/assets/images/dota2/rank_icons';
+  const medalUrl = medal ? `${baseUrl}/rank_icon_${medal}${variant}.png` : '';
+  const starUrl = star ? `${baseUrl}/rank_star_${star}.png` : '';
+  const leaderboardText = leaderboard ? `${leaderboard}` : '';
+  return [medalUrl, starUrl, leaderboardText];
+}
+
 function PlayerDetail(props) {
   const { player_id } = useParams();
   const entry = findPlayerEntry(player_id);
-  const [matches, error] = useAsyncData(() => fetchMatchHistory(entry));
+  const [player, error] = useAsyncData(() => fetchPlayerData(entry));
+  const [matches, ignore] = useAsyncData(() => fetchMatchHistory(entry));
+  const reader = fn => error ? 'Error' : (player ? fn(player) : 'Loading');
+  const [medalUrl, starUrl, leaderboardText] = decodeRankTier(player);
   return <div>
     <dl className="summary">
+      <dt>
+        <img src={player?.profile?.avatarfull || ''} />
+      </dt>
+      <dd className="rank">
+        <img className="medal" src={medalUrl} />
+        <img className="star" src={starUrl} />
+        <span className="leaderboard">{leaderboardText}</span>
+      </dd>
+      <dt>Steam ID</dt>
+      <dd>
+        <a href={player?.profile?.profileurl || ''}>
+          {reader(player => player.profile.steamid)}
+        </a>
+      </dd>
       <dt>Player ID</dt>
       <dd>
         <a href={`https://www.opendota.com/players/${entry.player_id}`}>
           {entry.player_id}
         </a>
+      </dd>
+      <dt>Player Name</dt>
+      <dd>
+        {reader(player => player.profile.personaname)}
+      </dd>
+      <dt>MMR Estimated</dt>
+      <dd>
+        {reader(player => player.mmr_estimate.estimate)}
+      </dd>
+      <dt>MMR Tracked</dt>
+      <dd>
+        {matches?.length ? matches[matches.length - 1].mmr : 0}
+      </dd>
+      <dt>Dota Plus</dt>
+      <dd>
+        {reader(player => player.profile.plus ? 'Active' : 'Inactive')}
       </dd>
     </dl>
     <MMRHistoryCurve matches={matches} />
