@@ -137,11 +137,16 @@ function PlayTimeHistogram(props) {
   return <Plot style={plotStyle} data={data} layout={layout} />;
 }
 
+const playerMap = {};
+for (const entry of tracking_players)
+  playerMap[entry.player_id] = { ...entry, tracked: true };
+
 function findPlayerEntry(player_id) {
-  for (const entry of tracking_players)
-    if (entry.player_id == player_id)
-      return entry;
-  return null;
+  if (player_id in playerMap)
+    return playerMap[player_id];
+  const anchor = { match_id: 0, mmr: 0 };
+  const recalibration = [];
+  return { player_id, anchor, recalibration, tracked: false };
 }
 
 function decodeRankTier(player) {
@@ -157,19 +162,20 @@ function decodeRankTier(player) {
     return '';
   })();
   const baseUrl = 'https://www.opendota.com/assets/images/dota2/rank_icons';
-  const medalUrl = medal ? `${baseUrl}/rank_icon_${medal}${variant}.png` : '';
+  const medalUrl = `${baseUrl}/rank_icon_${medal}${variant}.png`;
   const starUrl = star ? `${baseUrl}/rank_star_${star}.png` : '';
-  const leaderboardText = leaderboard ? `${leaderboard}` : '';
+  const leaderboardText = 0 < leaderboard && leaderboard <= 1000 ? `${leaderboard}` : '';
   return [medalUrl, starUrl, leaderboardText];
 }
 
 function PlayerDetail(props) {
   const { player_id } = useParams();
-  const entry = findPlayerEntry(player_id);
+  const entry = useMemo(() => findPlayerEntry(player_id), [player_id]);
   const [player, error] = useAsyncData(() => fetchPlayerData(entry));
   const [matches, ignore] = useAsyncData(() => fetchMatchHistory(entry));
   const reader = fn => error ? 'Error' : (player ? fn(player) : 'Loading');
   const [medalUrl, starUrl, leaderboardText] = decodeRankTier(player);
+  const mmr = matches?.length ? matches[matches.length - 1].mmr : 0;
   return <div>
     <dl className="summary">
       <dt>
@@ -198,11 +204,11 @@ function PlayerDetail(props) {
       </dd>
       <dt>MMR Estimated</dt>
       <dd>
-        {reader(player => player.mmr_estimate.estimate)}
+        {reader(player => player.mmr_estimate.estimate || 0)}
       </dd>
       <dt>MMR Tracked</dt>
       <dd>
-        {matches?.length ? matches[matches.length - 1].mmr : 0}
+        {entry.tracked ? mmr : 'Untracked'}
       </dd>
       <dt>Dota Plus</dt>
       <dd>
