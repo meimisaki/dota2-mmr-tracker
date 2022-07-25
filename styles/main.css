@@ -44,6 +44,15 @@
 	text-decoration: underline;
 }
 
+.search {
+	display: flex;
+	margin-left: auto;
+}
+
+.search :not(:first-child) {
+	margin-left: 8px;
+}
+
 .summary {
 	display: flex;
 	flex-wrap: wrap;
