@@ -33,6 +33,11 @@ function isRecalibration(player, match) {
   return false;
 }
 
+function isLegacyMMRSystem(match) {
+  // valve introduced new mmr system starting Jan 23rd 2023
+  return match.start_time < 1674432000;
+}
+
 function getMatchScore(player, match) {
   if (match.lobby_type != LobbyTypes.lobby_type_ranked.id)
     return 0;
@@ -41,7 +46,9 @@ function getMatchScore(player, match) {
   const is_winner = !is_leaver && is_radiant == match.radiant_win;
   const is_solo = match.party_size <= 1;
   const is_recal = isRecalibration(player, match);
-  return (is_winner ? 1 : -1) * (is_recal ? 75 : is_solo ? 30 : 20);
+  const is_legacy = isLegacyMMRSystem(match);
+  const score = is_recal ? 75 : (is_legacy ? (is_solo ? 30 : 20) : 25);
+  return (is_winner ? 1 : -1) * score;
 }
 
 async function fetchMatchHistory(entry) {
@@ -51,6 +58,7 @@ async function fetchMatchHistory(entry) {
   matches.sort((a, b) => {
     return a.match_id - b.match_id;
   });
+  const clamp = (mmr, match) => isLegacyMMRSystem(match) ? Math.max(0, mmr) : mmr;
   { // go backward
     let mmr = entry.anchor.mmr;
     for (var i = matches.length - 1; i >= 0; --i) {
@@ -58,7 +66,7 @@ async function fetchMatchHistory(entry) {
       if (match.match_id > entry.anchor.match_id)
         continue;
       match.mmr = mmr;
-      mmr = Math.max(0, mmr - getMatchScore(entry, match));
+      mmr = clamp(mmr - getMatchScore(entry, match), match);
     }
   }
   { // go forward
@@ -67,7 +75,7 @@ async function fetchMatchHistory(entry) {
       const match = matches[i];
       if (match.match_id <= entry.anchor.match_id)
         continue;
-      mmr = Math.max(0, mmr + getMatchScore(entry, match));
+      mmr = clamp(mmr + getMatchScore(entry, match), match);
       match.mmr = mmr;
     }
   }
