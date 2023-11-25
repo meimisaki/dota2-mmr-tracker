@@ -1,3 +1,4 @@
+// https://liquipedia.net/dota2/MediaWiki:Dota2webapi-heroes.json
 const dota2_webapi_heroes = [
 	{
 		"name": "antimage",
@@ -605,8 +606,18 @@ const dota2_webapi_heroes = [
 		"localized_name": "Dawnbreaker"
 	},
 	{
+		"name": "marci",
+		"id": 136,
+		"localized_name": "Marci"
+	},
+	{
 		"name": "primal_beast",
 		"id": 137,
 		"localized_name": "Primal Beast"
+	},
+	{
+		"name": "muerta",
+		"id": 138,
+		"localized_name": "Muerta"
 	},
 ];
