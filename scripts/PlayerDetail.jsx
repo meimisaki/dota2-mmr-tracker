@@ -4,14 +4,14 @@
   (global = global || self, factory(global.PlayerDetail = {}));
 }(this, (function (exports) { 'use strict';
 
-const { useMemo, useState } = React;
+const { useMemo, useEffect, useRef, useState } = React;
 const { useParams } = ReactRouterDOM;
 const { useAsyncData, useMediaQuery } = hooks;
 const { Heroes, GameModes, LobbyTypes, fetchMatchHistory, fetchPlayerData } = webapi;
 const Plot = createPlotlyComponent['default'](Plotly);
 const plotStyle = { width: '100%' };
 
-function getMatchText(match) {
+function getMatchText(match, sep = '<br>') {
   const start = new Date(match.start_time * 1000);
   const duration = new Date(match.duration * 1000);
   const hero = Heroes[match.hero_id] || {};
@@ -29,7 +29,7 @@ function getMatchText(match) {
     `Date: ${start.toLocaleDateString()}`,
     `Time: ${start.toLocaleTimeString()}`,
     `Duration: ${duration.toISOString().slice(11, 19)}`,
-  ].join('<br>');
+  ].join(sep);
 }
 
 function getMatchColor(match) {
@@ -137,6 +137,73 @@ function PlayTimeHistogram(props) {
   return <Plot style={plotStyle} data={data} layout={layout} />;
 }
 
+const Timeline = (props) => {
+  const { matches } = props;
+  const timelineRef = useRef(null);
+
+  useEffect(() => {
+if (!matches) return;
+const events = matches.slice(-80).map(match => {
+  const startDate = new Date(match.start_time * 1000); // Convert start_time from Unix timestamp
+  const endDate = new Date(startDate.getTime() + match.duration * 1000); // Calculate end time
+
+  // Format match duration in a more readable format (HH:MM:SS)
+  const duration = new Date(match.duration * 1000).toISOString().substring(11, 19);
+
+  return {
+      start_date: {
+          year: startDate.getFullYear(),
+          month: startDate.getMonth() + 1, // JavaScript months are 0-indexed
+          day: startDate.getDate(),
+          hour: startDate.getHours(),
+          minute: startDate.getMinutes(),
+          second: startDate.getSeconds()
+      },
+      end_date: {
+          year: endDate.getFullYear(),
+          month: endDate.getMonth() + 1,
+          day: endDate.getDate(),
+          hour: endDate.getHours(),
+          minute: endDate.getMinutes(),
+          second: endDate.getSeconds()
+      },
+      text: {
+          text: getMatchText(match),
+          headline : `<span style="color:${getMatchColor(match)}">${Heroes[match.hero_id]?.localized_name}</span>`,
+      },
+  };
+});
+
+const timelineData = {
+  title: {
+      text: {
+          headline: 'Match Intervals',
+          text: 'A timeline showing match intervals and details.'
+      }
+  },
+  events: events
+};
+
+// Timeline options
+const options = {
+  scale_factor: 4, // Controls how much the timeline zooms
+  zoom_sequence: [1, 2, 4, 8, 16], // Represents the different scale levels
+  start_at_end: true, // Start at the last event
+  // ... other options ...
+};
+
+    // Initialize TimelineJS
+    const timeline = new TL.Timeline(timelineRef.current, timelineData, options);
+
+    // Cleanup function
+    return () => {
+      // Perform any cleanup if necessary when the component unmounts
+    };
+  }, [matches]); // Empty dependency array ensures this runs once on mount
+
+  return <div ref={timelineRef} style={{ height: '600px' }} />;
+};
+
 const playerMap = {};
 for (const entry of tracking_players)
   playerMap[entry.player_id] = { ...entry, tracked: true };
@@ -215,6 +282,7 @@ function PlayerDetail(props) {
         {reader(player => player.profile.plus ? 'Active' : 'Inactive')}
       </dd>
     </dl>
+    <Timeline matches={matches} />
     <MMRHistoryCurve matches={matches} />
     <PlayTimeHistogram matches={matches} />
   </div>;
