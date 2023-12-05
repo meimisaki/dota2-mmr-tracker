@@ -271,7 +271,7 @@ function PlayerDetail(props) {
       </dd>
       <dt>MMR Estimated</dt>
       <dd>
-        {reader(player => player.mmr_estimate.estimate || 0)}
+        {reader(player => player.mmr_estimate?.estimate || 0)}
       </dd>
       <dt>MMR Tracked</dt>
       <dd>
