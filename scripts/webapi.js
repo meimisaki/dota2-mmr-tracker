@@ -47,7 +47,10 @@ function getMatchScore(player, match) {
   const is_solo = match.party_size <= 1;
   const is_recal = isRecalibration(player, match);
   const is_legacy = isLegacyMMRSystem(match);
-  const score = is_recal ? 75 : (is_legacy ? (is_solo ? 30 : 20) : 25);
+  const score = is_recal ? 75 : (is_legacy
+    ? (is_solo ? 30 : 20) // party match gain less mmr than solo
+    : (is_winner ? 27 : 25) // to mimic the intrinsic mmr inflation
+  );
   return (is_winner ? 1 : -1) * score;
 }
 
